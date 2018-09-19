@@ -1,0 +1,4 @@
+[submodule "src/cv2cg"]
+	path = src/cv2cg
+	url = git@github.com:simbaforrest/cv2cg.git
+	branch = apriltag
