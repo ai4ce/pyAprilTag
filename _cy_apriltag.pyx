@@ -44,7 +44,8 @@ cdef extern from "src/pyAprilTagCalibrator.cpp" namespace "py_apriltag":
         string rig_filename,
         string url,
         string log_dir,
-        int nDistCoeffs
+        int nDistCoeffs,
+        bool useEachValidPhoto
     )
 
 
@@ -54,12 +55,13 @@ def _cy_calib_by_apriltags(
     str rig_filename,
     str url,
     str log_dir,
-    int nDistCoeffs
+    int nDistCoeffs,
+    bool useEachValidPhoto
     ):
     cdef string rig_filename_ = rig_filename.encode()
     cdef string url_ = url.encode()
     cdef string log_dir_ = log_dir.encode()
-    return calib_by_apriltags(rig_filename_, url_, log_dir_, nDistCoeffs)
+    return calib_by_apriltags(rig_filename_, url_, log_dir_, nDistCoeffs, useEachValidPhoto)
 
 
 @cython.boundscheck(False)
@@ -144,5 +146,5 @@ def find(img, thresh=0):
     else:
         return _cy_find_apriltags_and_vis(img, thresh)
 
-def calib(rig_filename, url='camera://0', log_dir="", nDistCoeffs=2):
-    return _cy_calib_by_apriltags(rig_filename, url, log_dir, nDistCoeffs)
+def calib(rig_filename, url='camera://0', log_dir="", nDistCoeffs=2, useEachValidPhoto=True):
+    return _cy_calib_by_apriltags(rig_filename, url, log_dir, nDistCoeffs, useEachValidPhoto)

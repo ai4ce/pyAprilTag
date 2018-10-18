@@ -17,7 +17,6 @@ using april::tag::TagFamilyFactory;
 using april::tag::TagDetector;
 using april::tag::TagDetection;
 using helper::ImageSource;
-using helper::GConfig;
 
 std::vector< cv::Ptr<TagFamily> > gTagFamilies;
 cv::Ptr<TagDetector> gDetector;
@@ -53,39 +52,6 @@ struct CalibRig {
 		}
 		ss<<"]"<<std::endl;
 		return ss.str();
-	}
-
-	void loadFromConfig() {
-		using namespace ConfigHelper;
-		ConfigNode::Ptr cfg = GConfig::Instance().getRoot().getChild("CalibRig");
-		if (cfg==0) {
-			logle("[CalibRig error] no CalibRig in Config!");
-			exit(-1);
-		}
-		ConfigNode& cfn = *cfg;
-
-		//get rig mode and start_id
-		std::string mode = cfn["mode"].str();
-		this->isTag3d=(mode.compare("3d")==0);
-		std::vector<std::string> markerNames;
-		cfn["markerNames"] >> markerNames;
-
-		const int nTags=(int)markerNames.size();
-		if(nTags<8) {
-			logle("[CalibRig error] a 3D calibration rig must have more than 8 tags!");
-			exit(-1);
-		}
-		std::vector<double> buf;
-		cfn["tagCenters"]>>buf;
-		if( nTags*3 != (int)buf.size() ) {
-			logle("[CalibRig error] CalibRig:tagCenters invalid in Config!");
-			exit(-1);
-		}//TODO: check if the points forms a 3d rig really by PCA
-
-		for(int i=0; i<nTags; ++i) {
-			const std::string& name=markerNames[i];
-			name2Xw[name]=cv::Point3d(buf[i*3+0],buf[i*3+1],buf[i*3+2]);
-		}
 	}
 
 	void loadFromImage(string fname) {
@@ -369,7 +335,9 @@ struct AprilCalibprocessor : public ImageHelper::ImageSource::Processor {
 
 };//end of struct AprilCalibprocessor
 
-int calib_by_apriltags(string rig_filename, string url="camera://0", string log_dir="", int nDistCoeffs=2)
+int calib_by_apriltags(
+    string rig_filename, string url="camera://0", string log_dir="",
+    int nDistCoeffs=2, bool useEachValidPhoto=true)
 {
 	LogHelper::GetOrSetLogLevel(LogHelper::LOG_INFO);
 
@@ -400,6 +368,10 @@ int calib_by_apriltags(string rig_filename, string url="camera://0", string log_
 	AprilCalibprocessor processor;
 	processor.nDistCoeffs = nDistCoeffs;
 	processor.isPhoto = is->isClass<helper::ImageSource_Photo>();
+	if (processor.isPhoto) {
+	    processor.useEachValidPhoto = useEachValidPhoto;
+	    is->loop(false);
+	}
 	if(log_dir.empty())
 	    processor.outputDir = is->getSourceDir();
 	else

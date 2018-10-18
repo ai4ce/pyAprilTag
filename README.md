@@ -11,7 +11,7 @@ Currently it is tested under Windows10(VC2017, x64), OpenCV3.4.2(official prebui
 Version
 -------
 
-0.0.1
+0.0.2
 
 Installation
 ------------
@@ -22,12 +22,14 @@ Installation
 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
 ```
 
-2. compile the project:   
+2. Check the setup.py file, modify the OpenCV include and libs path according to your system.   
+
+3. compile the project:   
 ```
 python setup.py build_ext --inplace
 ```
 
-3. Enjoy!   
+4. Enjoy!   
 ```
 python demo.py
 ```

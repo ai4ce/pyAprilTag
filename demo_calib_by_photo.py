@@ -5,11 +5,11 @@ from numpy import array
 import apriltag
 
 CUR_DIR = os.path.dirname(__file__)
-LOG_DIR = os.path.join(CUR_DIR,'calib')
-if not os.path.exists(LOG_DIR) or len([f.endswith('.png') for f in os.listdir(LOG_DIR)])<2:
+LOG_DIR = os.path.join(CUR_DIR,'calib_photo')
+if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
     apriltag.calib('src/cv2cg/data/calib_pattern_Tag36h11.png',
-                   'camera://{:d}'.format(0),
+                   'photo://calib\*.png',
                    log_dir=LOG_DIR, nDistCoeffs=4)
 
 import importlib

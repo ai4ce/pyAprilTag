@@ -27,6 +27,9 @@ elif sys_name=='Windows':
     opencv_libs = [str(lib) for lib in opencv_libs_str.strip().split()]
     opencv_incs = [str(inc) for inc in opencv_incs_str.strip().split()]
 
+for it in opencv_incs+opencv_libs:
+        assert(os.path.exists(it))
+
 self_incs = [os.path.join(CUR_DIR, 'src'),
              os.path.join(CUR_DIR, 'src/cv2cg/include'),
              os.path.join(CUR_DIR, 'src/cv2cg/3rdparty/lch/include')]
@@ -50,7 +53,7 @@ elif sys_name == 'Windows':
 
 setup(
     name="apriltag._apriltag",
-    version = "0.0.1",
+    version = "0.0.2",
     author = "Chen Feng",
     author_email= "cfeng@nyu.edu",
     description="python wrapper for AprilTag implemented in library cv2cg",
