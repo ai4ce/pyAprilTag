@@ -39,6 +39,9 @@ cdef extern from "src/pyAprilTagDetector.cpp" namespace "py_apriltag":
         const int hammingThresh
     )
 
+cdef extern from "src/pyAprilTagDetector.cpp" namespace "py_apriltag":
+    void set_tagfamilies(string tagid)
+
 cdef extern from "src/pyAprilTagCalibrator.cpp" namespace "py_apriltag":
     int calib_by_apriltags(
         string rig_filename,
@@ -47,6 +50,13 @@ cdef extern from "src/pyAprilTagCalibrator.cpp" namespace "py_apriltag":
         int nDistCoeffs,
         bool useEachValidPhoto
     )
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _cy_set_tagfamilies(str tagid):
+    cdef string tagid_ = tagid.encode()
+    set_tagfamilies(tagid_)
 
 
 @cython.boundscheck(False)
@@ -137,6 +147,9 @@ def _cy_find_apriltags_and_vis(
     Hs = np.array(Hs_).reshape(N,3,3)
     return ids, corners, centers, Hs
 
+def set(tagid):
+    tagid = str(tagid)
+    _cy_set_tagfamilies(tagid)
 
 def find(img, thresh=0):
     img = np.require(img, dtype=np.uint8, requirements=['C'])

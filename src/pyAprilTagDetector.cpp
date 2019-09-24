@@ -24,13 +24,26 @@ struct AprilTagDetector {
     cv::Ptr<TagDetector> gDetector;
 
 	virtual ~AprilTagDetector() {}
-	AprilTagDetector(string tagid="4") {
-        TagFamilyFactory::create(tagid, this->gTagFamilies); //defaul Tag36h11
+	AprilTagDetector(string tagid="4") { //defaul Tag36h11
+        this->set_tagfamilies(tagid, false);
+	}
+
+	void set_tagfamilies(string tagid, bool verbose) { //example input: "1", "12", "14", etc.
+	    TagFamilyFactory::create(tagid, this->gTagFamilies);
         this->gDetector = new TagDetector(this->gTagFamilies);
         gDetector->segDecimate = false;
         if(gDetector.empty()) {
             throw std::runtime_error("create TagDetector fail!");
         }
+        if(!verbose) return;
+        cout << "Selected TagFamily:" << endl;
+        for(int i=0; i<(int)this->gTagFamilies.size(); ++i) {
+            cout << this->gTagFamilies[i]->familyName() << endl;
+        }
+        cout << "-------------------" << endl;
+	}
+	inline void set_tagfamilies(string tagid) {
+	    set_tagfamilies(tagid, true);
 	}
 
 	size_t process(//return N detections with hamming distance <= hammingThresh
@@ -96,6 +109,11 @@ struct AprilTagDetector {
 };//end of struct AprilTagDetector
 
 typedef helper::Singleton<AprilTagDetector> GAprilTagDetector;
+
+void set_tagfamilies(std::string tagid)
+{
+    GAprilTagDetector::Instance().set_tagfamilies(tagid);
+}
 
 size_t detect_apriltags(//return N detections with hamming distance <= hammingThresh
     Mat& frame,             //HxW
