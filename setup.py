@@ -88,7 +88,7 @@ Extension('pyAprilTag._apriltag',
 
 setup(
     name="pyAprilTag",
-    version="0.0.5",
+    version="0.0.6",
     author="Chen Feng",
     author_email="cfeng@nyu.edu",
     description="python wrapper for AprilTag implemented in library cv2cg",
@@ -100,5 +100,8 @@ setup(
     license="BSD",
     cmdclass={'build_ext': build_ext if sys_name=='Windows' else BuildExt},
     ext_modules=cythonize(extensions, compiler_directives={'language_level' : sys.version_info[0]}),
-    install_requires=['opencv>2,<4',]
+    install_requires=[
+        'numpy',
+        'matplotlib'
+    ]
 )
