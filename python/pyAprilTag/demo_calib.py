@@ -17,7 +17,7 @@ if len(logs) == 0:
     print('no calibration log available!')
     exit(-1)
 
-last_log = os.path.relpath(os.path.join(LOG_DIR, logs[-1])).replace('\\','.')[:-3]
+last_log = os.path.relpath(os.path.join(LOG_DIR, logs[-1])).replace(os.path.sep,'.')[:-3]
 calib = importlib.import_module(last_log)
 print('last log: '+last_log)
 print('camera intrinsic matrix:')

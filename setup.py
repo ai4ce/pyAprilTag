@@ -1,9 +1,9 @@
 import os
+import sys
 import glob
 import platform
 import numpy as np
-# from distutils.core import setup, Extension
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
@@ -14,54 +14,71 @@ python setup.py build_ext --inplace
 ```
 """
 
+# Avoid a gcc warning below:
+# cc1plus: warning: command line option ‘-Wstrict-prototypes’ is valid
+# for C/ObjC but not for C++
+class BuildExt(build_ext):
+    def build_extensions(self):
+        if '-Wstrict-prototypes' in self.compiler.compiler_so:
+            self.compiler.compiler_so.remove('-Wstrict-prototypes')
+        super().build_extensions()
+
 # Determine current directory of this setup file to find our module
 CUR_DIR = os.path.dirname(__file__)
-sys_name = platform.system()
-if sys_name == 'Linux':
-    opencv_libs = glob.glob('/usr/local/lib/libopencv*.so')
-    opencv_incs = ['/usr/local/include/']
-
-elif sys_name=='Windows':
-    opencv_libs_str = 'C:/lib/build/vs2017_x64/opencv347_minimal/install/x64/vc15/lib/opencv_world347.lib'
-    opencv_incs_str = 'C:/lib/build/vs2017_x64/opencv347_minimal/install/include'
-    # Parse into usable format for Extension call
-    opencv_libs = [str(lib) for lib in opencv_libs_str.strip().split()]
-    opencv_incs = [str(inc) for inc in opencv_incs_str.strip().split()]
-
-    #copy *.dll to local
-    bin_dir = os.path.join(os.path.dirname(opencv_libs_str), '..', 'bin')
-    opencv_bins = [os.path.join(bin_dir, f) for f in os.listdir(bin_dir) if f.endswith('.dll')]
-    bin_dest = os.path.join(CUR_DIR, 'python', 'pyAprilTag')
-    [os.system('copy "{}" {}'.format(f, bin_dest)) for f in opencv_bins]
-
-elif sys_name=='Darwin': #Mac
-    raise NotImplementedError(
-        "Mac users: you need to set the opencv_libs and opencv_incs accordingly!"
-    )
-
-for it in opencv_incs+opencv_libs:
-        assert(os.path.exists(it))
-
 self_incs = [os.path.join(CUR_DIR, 'src'),
              os.path.join(CUR_DIR, 'src/cv2cg/include'),
              os.path.join(CUR_DIR, 'src/cv2cg/3rdparty/lch/include')]
 
-if sys_name == 'Linux' or sys_name == 'Darwin':
-    extensions = [
-    Extension('pyAprilTag._apriltag',
-              sources=[os.path.join(CUR_DIR, '_cy_apriltag.pyx')],
-              language='c++',
-              include_dirs=[np.get_include()] + opencv_incs + self_incs,
-              extra_compile_args=['-O3', '-w'],
-              extra_link_args=opencv_libs)]
-elif sys_name == 'Windows':
-    extensions = [
-    Extension('pyAprilTag._apriltag',
-              sources=[os.path.join(CUR_DIR, '_cy_apriltag.pyx')],
-              language='c++',
-              include_dirs=[np.get_include()] + opencv_incs + self_incs,
-              extra_compile_args=['/O2'],
-              extra_link_args=opencv_libs)]
+required_opencv_modules = ['opencv_'+it for it in
+                           'calib3d core features2d highgui imgcodecs imgproc videoio world'.split(' ')]
+
+def get_conda_opencv_info(sys_name):
+    try:
+        import cv2
+    except ImportError as e:
+        print(str(e))
+        print('Please install opencv for python in your current Anaconda environment via the following:\n'
+              'conda install -c conda-forge opencv')
+        exit(-1)
+
+    if sys_name == 'Linux':
+        opencv_lib_dir = os.path.abspath(os.path.join(os.path.dirname(cv2.__file__), *(['..'] * 2)))
+        available_opencv_libs = glob.glob(os.path.join(opencv_lib_dir, 'libopencv*.so'))
+    elif sys_name == 'Darwin':
+        opencv_lib_dir = os.path.abspath(os.path.join(os.path.dirname(cv2.__file__), *(['..'] * 2)))
+        available_opencv_libs = glob.glob(os.path.join(opencv_lib_dir, 'libopencv*.dylib'))
+    else: #sys_name=='Windows'
+        opencv_lib_dir = os.path.abspath(os.path.join(os.path.dirname(cv2.__file__), *['..'] * 2, 'Library', 'lib'))
+        available_opencv_libs = glob.glob(os.path.join(opencv_lib_dir, 'opencv*.lib'))
+
+    opencv_inc_dir = os.path.abspath(os.path.join(opencv_lib_dir, '..', 'include'))
+    assert(os.path.exists(opencv_lib_dir))
+    assert(os.path.exists(opencv_inc_dir))
+    assert(os.path.exists(os.path.join(opencv_inc_dir, 'opencv2')))
+
+    assert(any(available_opencv_libs))
+    available_opencv_libs = [os.path.splitext(os.path.basename(it))[0].lstrip('lib')
+                             for it in available_opencv_libs]
+
+    opencv_libs = [lib for lib in required_opencv_modules if lib in available_opencv_libs]
+    return opencv_lib_dir, opencv_inc_dir, opencv_libs
+
+sys_name = platform.system()
+opencv_lib_dir, opencv_inc_dir, opencv_libs = get_conda_opencv_info(sys_name)
+# print(opencv_lib_dir)
+# print(opencv_inc_dir)
+# print(opencv_libs)
+
+extensions = [
+Extension('pyAprilTag._apriltag',
+          sources=[os.path.join(CUR_DIR, '_cy_apriltag.pyx')],
+          language='c++',
+          include_dirs=[np.get_include(), opencv_inc_dir] + self_incs,
+          libraries=opencv_libs,
+          library_dirs=[opencv_lib_dir,],
+          extra_compile_args=['/O2'] if sys_name=='Windows' else ['-O3', '-w'],
+          # extra_link_args=None if sys_name=='Windows' else ['-Wl,-R$ORIGIN/.']
+)]
 
 setup(
     name="pyAprilTag",
@@ -72,9 +89,9 @@ setup(
     url="https://github.com/ai4ce/pyAprilTag",
     packages=['pyAprilTag'],
     package_dir={'': 'python'},
-    package_data={'pyAprilTag': ['*.png', 'data/**/*', '*.dll', '*.so', '*.dylib']},
+    package_data={'pyAprilTag': ['data/*.png', 'data/**/*']},
     include_package_data=True,
     license="BSD",
-    cmdclass={'build_ext': build_ext},
-    ext_modules=cythonize(extensions)
+    cmdclass={'build_ext': BuildExt},
+    ext_modules=cythonize(extensions, compiler_directives={'language_level' : sys.version_info[0]})
 )
