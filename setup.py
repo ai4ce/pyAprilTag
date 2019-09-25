@@ -38,8 +38,10 @@ def get_conda_opencv_info(sys_name):
     except ImportError as e:
         print(str(e))
         print('Please install opencv for python in your current Anaconda environment via the following:\n'
-              'conda install -c conda-forge opencv')
+              'conda install -c conda-forge opencv=3.4.7')
         exit(-1)
+
+    assert(cv2.getVersionMajor() == 3) #currently we do not support opencv4
 
     if sys_name == 'Linux':
         opencv_lib_dir = os.path.abspath(os.path.join(os.path.dirname(cv2.__file__), *(['..'] * 2)))
@@ -60,14 +62,18 @@ def get_conda_opencv_info(sys_name):
     available_opencv_libs = [os.path.splitext(os.path.basename(it))[0].lstrip('lib')
                              for it in available_opencv_libs]
 
-    opencv_libs = [lib for lib in required_opencv_modules if lib in available_opencv_libs]
+    if sys_name == 'Windows':
+        opencv_libs = [lib for lib in available_opencv_libs
+                       if any([lib.startswith(it) for it in required_opencv_modules])]
+    else:
+        opencv_libs = [lib for lib in required_opencv_modules if lib in available_opencv_libs]
     return opencv_lib_dir, opencv_inc_dir, opencv_libs
 
 sys_name = platform.system()
 opencv_lib_dir, opencv_inc_dir, opencv_libs = get_conda_opencv_info(sys_name)
-# print(opencv_lib_dir)
-# print(opencv_inc_dir)
-# print(opencv_libs)
+print(opencv_lib_dir)
+print(opencv_inc_dir)
+print(opencv_libs)
 
 extensions = [
 Extension('pyAprilTag._apriltag',
@@ -82,7 +88,7 @@ Extension('pyAprilTag._apriltag',
 
 setup(
     name="pyAprilTag",
-    version="0.0.4",
+    version="0.0.5",
     author="Chen Feng",
     author_email="cfeng@nyu.edu",
     description="python wrapper for AprilTag implemented in library cv2cg",
@@ -92,6 +98,7 @@ setup(
     package_data={'pyAprilTag': ['data/*.png', 'data/**/*']},
     include_package_data=True,
     license="BSD",
-    cmdclass={'build_ext': BuildExt},
-    ext_modules=cythonize(extensions, compiler_directives={'language_level' : sys.version_info[0]})
+    cmdclass={'build_ext': build_ext if sys_name=='Windows' else BuildExt},
+    ext_modules=cythonize(extensions, compiler_directives={'language_level' : sys.version_info[0]}),
+    install_requires=['opencv>2,<4',]
 )

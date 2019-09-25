@@ -29,6 +29,7 @@ if not cap.isOpened():
 
 # Read until video is completed
 cnt = 0
+cv2.namedWindow('Frame', cv2.WINDOW_NORMAL)
 while cap.isOpened():
     # Capture frame-by-frame
     ret, frame = cap.read()
