@@ -12,18 +12,34 @@ and python3.7/3.6 in Anaconda3.
 Version
 -------
 
-0.0.5
+0.0.6
 
 Installation
 ------------
 
-### Install from Pip
+### Install from Pip/Conda (easiest)
 
-For Linux and Windows users, download the proper wheel file from https://github.com/ai4ce/pyAprilTag/releases,
-then simply run the following command under the same folder of the wheel file to install:   
-```
-pip install pyAprilTag-0.0.4-cp37-cp37m-win_amd64.whl
-```
+0. Download file [opencv_py37_conda-forge.txt](https://github.com/ai4ce/pyAprilTag/raw/master/opencv_py37_conda-forge.txt) to your anaconda base directory (default in windows is %USERPROFILE%)
+1. try to create and activate a new conda environment with:     
+    ```
+    conda create --name opencv_py37 --file opencv_py37_conda-forge.txt -c conda-forge
+    conda activate opencv_py37
+    ```
+
+2. for Windows users:    
+    ```
+    pip install https://github.com/ai4ce/pyAprilTag/releases/download/0.0.6/pyAprilTag-0.0.6-cp37-cp37m-win_amd64.whl
+    ```
+    
+   for Linux users:       
+   ```
+   pip install https://github.com/ai4ce/pyAprilTag/releases/download/0.0.6/pyAprilTag-0.0.6-cp37-cp37m-linux_x86_64.whl
+   ```
+
+3. Enjoy the demo:     
+    ```
+    python -m pyAprilTag.demo
+    ```
 
 ### Install by Compiling from Source
 
