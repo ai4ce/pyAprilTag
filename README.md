@@ -22,7 +22,7 @@ Installation
 0. Download file [opencv_py37_conda-forge.txt](https://github.com/ai4ce/pyAprilTag/raw/master/opencv_py37_conda-forge.txt) to your anaconda base directory (default in windows is %USERPROFILE%)
 1. try to create and activate a new conda environment with:     
     ```
-    conda create --name opencv_py37 --file opencv_py37_conda-forge.txt -c conda-forge
+    conda create --name opencv_py37 python=3.7 --file opencv_py37_conda-forge.txt -c conda-forge
     conda activate opencv_py37
     ```
 
